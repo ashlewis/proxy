@@ -1,6 +1,6 @@
 <?php
-if (!isset($json)) {
-	print 'No data.';
+if (!$json) {
+	print json_encode(array('noData'=>true));
 } else {
 	print $json;
 }

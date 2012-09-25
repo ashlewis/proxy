@@ -19,18 +19,7 @@ class NdbcFeed extends Model
 	//------------------------------------------
 
 	/**
-	* constructor - create new ndbc feed
-	* 
-	* @param int - station id
-	*/
-	/*public function __construct($stationId){
-		$this->url = self::BASE_URL . $stationId .'.rss';
-
-		$this->getXml();
-	}*/
-
-	/**
-	* constructor - create new ndbc feed
+	* load new ndbc feed
 	* 
 	* @param int - station id
 	*/
@@ -58,7 +47,25 @@ class NdbcFeed extends Model
 	* Load xml feed
 	*/
 	private function getXml(){
-		$this->xml = file_get_contents($this->url);
+
+		$this->xml = file_get_contents(
+						$this->url,
+						false,
+					    stream_context_create(
+					        array(
+					            'http' => array(
+					                'ignore_errors' => true
+					            )
+					        )
+    					)
+    				);
+
+	
+		if (!$this->xml || $http_response_header[0] == 'HTTP/1.1 404 Not Found') {
+			throw new Exception();
+		}
+			
+		
 	}
 
 	/**
@@ -67,9 +74,17 @@ class NdbcFeed extends Model
     * @param string 
     * @return string - json 
     */
-    private function xmlToJson(){              
+    private function xmlToJson(){   
 
-        $this->stripCdataTags();     
+    	$simpleXml = simplexml_load_string($this->xml);
+    	/*print '<pre>';
+    	print_r($simpleXml->channel);
+    	print '<pre>';*/
+    	$description = str_replace(array('<![CDATA[', ']]>'), array('', ''), $simpleXml->channel->item->description);
+    	print $description;
+    	exit();
+
+        $this->stripCdataTags();
 
         $this->formatDescriptionAsXml();     
 

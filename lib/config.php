@@ -46,8 +46,10 @@ class Config
 
         if (file_exists(self::get('controllerPath') . strtolower($class) . '.php')) {
             include self::get('controllerPath') . strtolower($class) . '.php';
+
         } elseif (file_exists(self::get('modelPath') . strtolower($class) . '.php')) {
             include self::get('modelPath') . strtolower($class) . '.php';
+            
         } else {
             $e = new Exception("Class $class does not exist");
             echo $e->getMessage();

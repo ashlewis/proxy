@@ -2,15 +2,27 @@
 /**
  * Bootstrap class to set up application
  *
- * @author ashleyl
- *
+ * @author ashlewis (@shleylewis)
+ * @version 0.1.0
+ * @license WTFPL
  */
+
 class Bootstrap
 {
-    // private $dbh;
-    private $controller;
-    private $action;
-    private $args;
+	//------------------------------------------
+	// Private properties
+	//------------------------------------------
+    private $controllerName,
+    		$controller,
+    		$modelName,
+    		$model,
+    		$action,
+     		$args,
+     		$pathArray;
+
+    //------------------------------------------
+	// Public functions
+	//------------------------------------------
 
 	/**
 	 * Initialize app
@@ -31,37 +43,100 @@ class Bootstrap
 	 */
 	public function route($defaultController, $defaultAction){
 
+		$this->setPathArray();
+
+		$this->setControllerName();
+
+		$this->setModelName();
+
+		$this->setAction();
+
+		$this->setArgs();
+
+		$this->setController();
+		
+		$this->dispatch();
+	}
+
+	//------------------------------------------
+	// Private functions
+	//------------------------------------------
+
+	/**
+	 * Create array from url components
+	 */
+	private function setPathArray(){
 		$path = isset($_GET['q']) ? $_GET['q'] : null;
-		$pathArray = isset($path) ? explode('/', rtrim($path, '/')) : array();
+		$this->pathArray = isset($path) ? explode('/', rtrim($path, '/')) : array();
+	}
 
-		$controllerName = ($controllerName = array_shift($pathArray)) ? $controllerName : $defaultController;
+	/**
+	 * Determine controller name from url components
+	 */
+	private function setControllerName(){
 
-		$this->action = ($this->action = array_shift($pathArray)) ? $this->action : $defaultAction;
+		$controllerName = ($controllerName = array_shift($this->pathArray)) ? $controllerName : $defaultController;
 
-		$this->args = $pathArray;
+		$this->controllerName = ucfirst($controllerName) .'Controller';
+	}
 
-		$modelName = ucfirst($controllerName);
-		$controllerName = ucwords($modelName) .'Controller';
-
-		try {
-			$this->controller = ModelControllerFactory::create(
-				$controllerName,
-				new View(),
-				ModelFactory::create($modelName)
-			);
-		} catch (Exception $e) {
-			// php 5.3.0+
-			$this->controller = new ErrorController(new View());
-		}
-
-		if (method_exists($this->controller, $this->action)) {
-			$this->controller->{$this->action}($this->args);
-		} else {
-			$this->controller = new ErrorController(new View());
-			$this->action = 'pageNotFound';
-			$this->controller->{$this->action}($this->args);
-		}
+	/**
+	 * Determine model name from url components
+	 */
+	private function setModelName(){
+		$this->modelName = str_replace('Controller', '', $this->controllerName);
 
 	}
 
+	/**
+	 * Determine action from url components
+	 */
+	private function setAction(){
+		$this->action = ($this->action = array_shift($this->pathArray)) ? $this->action : $defaultAction;
+	}	
+
+	/**
+	 * Determine args from url components
+	 */
+	private function setArgs(){
+		$this->args = $this->pathArray;
+	}
+
+	/**
+	 * Set controller and action for page not found situations
+	 */
+	private function setRoutePageNotFound(){
+		$this->controller = new ErrorController(new View());
+		$this->action = 'pageNotFound';	
+	}
+
+	/**
+	 * Dynamically create required controller(and model)
+	 */
+	private function setController(){
+
+		try {
+			$this->controller = ModelControllerFactory::create(
+									$this->controllerName,
+									new View(),
+									ModelFactory::create($this->modelName)
+								);
+
+		} catch (Exception $e) {
+			// required controller class does not exist (NOTE: php 5.3.0+ only)
+			$this->setRoutePageNotFound();
+		}
+
+		if (!method_exists($this->controller, $this->action)) {
+			// required action method does not exist within controller class
+			$this->setRoutePageNotFound();		
+		}
+	}
+
+	/**
+	 * Call required action method (with required arguments) in required controller class
+	 */
+	private function dispatch(){
+		$this->controller->{$this->action}($this->args);
+	}
 }

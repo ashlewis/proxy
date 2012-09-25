@@ -26,9 +26,12 @@ class NdbcFeedController extends ModelController
      */
     public function read(array $args) {
 
-        $this->model->load($args[0]);
-
-        $this->view->setVariables('json', $this->model->getJson());
+        try {
+            $this->model->load($args[0]);
+            $this->view->setVariables('json', $this->model->getJson());
+        } catch (Exception $e) {
+            $this->view->setVariables('json', false);
+        }        
 
         $this->view->render($this->templateDir . Config::get('ds') . 'read', 0, 0);
     }
