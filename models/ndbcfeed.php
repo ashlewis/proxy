@@ -77,13 +77,7 @@ class NdbcFeed extends Model
     private function xmlToJson(){   
 
     	$simpleXml = simplexml_load_string($this->xml);
-    	/*print '<pre>';
-    	print_r($simpleXml->channel);
-    	print '<pre>';*/
-    	$description = str_replace(array('<![CDATA[', ']]>'), array('', ''), $simpleXml->channel->item->description);
-    	print $description;
-    	exit();
-
+  
         $this->stripCdataTags();
 
         $this->formatDescriptionAsXml();     
@@ -97,7 +91,7 @@ class NdbcFeed extends Model
     */
 	private function stripCdataTags(){
 
-        $this->xml = str_replace(array('<![CDATA[', ']]>'), array('', ''), $this->xml);
+        $this->xml = str_replace(array('<![CDATA[', ']]>'), array('<readings>', '</readings>'), $this->xml);
     }
 
     /**
@@ -105,6 +99,20 @@ class NdbcFeed extends Model
     */
     private function formatDescriptionAsXml(){   
 
-        $this->xml = str_replace(array('<strong>', '</strong>', '<br />'), array('<readings><key>', '</key><value>', '</value></readings>'), $this->xml);
+        $this->xml = preg_replace_callback(
+        				'/<strong>(.+?):<\/strong>(.+?)<br \/>/',
+        				function($m){
+        					$m1 = str_replace(' ', '-', $m[1]);
+        					$m2 = trim($m[2]);
+        					return '<'. $m1 .'>'. $m[2] .'</'. $m1 .'>';
+        				},
+        				$this->xml
+        			);
+        
+        //
+        //http://gskinner.com/RegExr/
+        //<strong>ELE MENT:</strong>VAL UE<br />
+        //<strong>(.+):</strong>(.+)<br />
+        //<$1>$2<$1>
     }
 }

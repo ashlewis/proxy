@@ -12,7 +12,10 @@ class Bootstrap
 	//------------------------------------------
 	// Private properties
 	//------------------------------------------
-    private $controllerName,
+    private 
+    		$defaultController,
+    		$defaultAction,
+    		$controllerName,
     		$controller,
     		$modelName,
     		$model,
@@ -42,6 +45,9 @@ class Bootstrap
 	 * @param string $defaultAction
 	 */
 	public function route($defaultController, $defaultAction){
+
+		$this->defaultController = $defaultController;
+		$this->defaultAction = $defaultAction;
 
 		$this->setPathArray();
 
@@ -75,7 +81,11 @@ class Bootstrap
 	 */
 	private function setControllerName(){
 
-		$controllerName = ($controllerName = array_shift($this->pathArray)) ? $controllerName : $defaultController;
+		$controllerName = array_shift($this->pathArray);
+
+		if (!$controllerName) {
+			$controllerName = $this->defaultAction;
+		}
 
 		$this->controllerName = ucfirst($controllerName) .'Controller';
 	}
@@ -92,7 +102,13 @@ class Bootstrap
 	 * Determine action from url components
 	 */
 	private function setAction(){
-		$this->action = ($this->action = array_shift($this->pathArray)) ? $this->action : $defaultAction;
+
+		$this->action = array_shift($this->pathArray);
+
+		if (!$this->action) {
+			$this->action = $this->defaultAction;
+		}
+
 	}	
 
 	/**
