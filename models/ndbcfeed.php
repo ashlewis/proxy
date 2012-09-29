@@ -12,7 +12,8 @@ class NdbcFeed extends Model
 	//------------------------------------------
 	private $url,
 			$xml,
-			$json;
+			$json,
+			$rootTag;
     
     //------------------------------------------
 	// Public functions
@@ -63,8 +64,7 @@ class NdbcFeed extends Model
 	
 		if (!$this->xml || $http_response_header[0] == 'HTTP/1.1 404 Not Found') {
 			throw new Exception();
-		}
-			
+		}		
 		
 	}
 
@@ -74,33 +74,63 @@ class NdbcFeed extends Model
     * @param string 
     * @return string - json 
     */
-    private function xmlToJson(){   
+    private function xmlToJson(){
 
-    	$simpleXml = simplexml_load_string($this->xml);
-  
-        $this->stripCdataTags();
+		$this->getFeedItem();
 
-        $this->formatDescriptionAsXml();     
+		$this->addNamespacedRootTag();
+
+		$this->stripCdataTags();
+
+        $this->formatDescriptionAsXml();
 
         $this->json = json_encode((array)simplexml_load_string($this->xml));
 
+    }
+
+    private function buildNamespacedRootTag($simpleXml){
+
+    	$namespaces = $simpleXml->getNameSpaces(true);    	
+
+    	$this->rootTag = '<root';
+    	foreach ($namespaces as $name => $url) {
+    		$this->rootTag .= ' xmlns:'. $name .'="'. $url .'"';
+    	}
+    	$this->rootTag .= '>';
+    }
+
+    private function getFeedItem(){
+
+    	$simpleXml = simplexml_load_string($this->xml);
+
+    	$this->buildNamespacedRootTag($simpleXml);
+
+    	$this->xml = $simpleXml->channel->item->asXML();
+    }
+
+    private function addNamespacedRootTag(){
+    	$this->xml = $this->rootTag . $this->xml . '</root>';
     }
 
 	/**
     * Strip CDATA tags from xml
     */
 	private function stripCdataTags(){
+		
+		$this->xml = str_replace(array('<![CDATA[', ']]>'), array('', ''), $this->xml);
 
-        $this->xml = str_replace(array('<![CDATA[', ']]>'), array('<readings>', '</readings>'), $this->xml);
     }
 
     /**
     * Format HTML description as xml
     */
-    private function formatDescriptionAsXml(){   
+    private function formatDescriptionAsXml(){
 
+    	$this->xml = str_replace(array('<description>', '</description>'), array('<readings>', '</readings>'), $this->xml);
+
+    	// <strong>key</strong>val<br /> => <key>val</key>
         $this->xml = preg_replace_callback(
-        				'/<strong>(.+?):<\/strong>(.+?)<br \/>/',
+        				'/<strong>(.+):<\/strong>(.+)<br \/>/',
         				function($m){
         					$m1 = str_replace(' ', '-', $m[1]);
         					$m2 = trim($m[2]);
@@ -108,6 +138,8 @@ class NdbcFeed extends Model
         				},
         				$this->xml
         			);
+
+        $this->xml = str_replace('<br />', '', $this->xml);
         
         //
         //http://gskinner.com/RegExr/
@@ -115,4 +147,5 @@ class NdbcFeed extends Model
         //<strong>(.+):</strong>(.+)<br />
         //<$1>$2<$1>
     }
+
 }
