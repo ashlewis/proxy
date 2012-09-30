@@ -5,7 +5,8 @@ class NdbcFeed extends Model
 	//------------------------------------------
 	// Class constants
 	//------------------------------------------
-	const BASE_URL = 'http://www.ndbc.noaa.gov/data/latest_obs/';
+	const BASE_URL = 'http://www.ndbc.noaa.gov/data/latest_obs/',
+		  FILE_EXT= '.rss';
     
     //------------------------------------------
 	// Private properties
@@ -13,27 +14,27 @@ class NdbcFeed extends Model
 	private $url,
 			$xml,
 			$json,
-			$rootTag;
+			$rootElement;
     
     //------------------------------------------
 	// Public functions
 	//------------------------------------------
-
+	
 	/**
-	* load new ndbc feed
-	* 
-	* @param int - station id
-	*/
-	public function load($stationId){
-		$this->url = self::BASE_URL . $stationId .'.rss';
-
-		$this->getXml();
+	 * Initialise feed for specified station
+	 * 
+	 * @param int $stationId - ndbc stastion id
+	 */
+	public function init($stationId){
+		$this->url = self::BASE_URL . $stationId . self::FILE_EXT;
 	}
 
 	/* 
-	* Output feed as json
+	* Return json formatted data
 	*/
-	public function getJson(){
+	public function getJsonData(){		
+
+		$this->fetchXmlData();
 
 		$this->xmlToJson();
 
@@ -45,9 +46,9 @@ class NdbcFeed extends Model
 	//------------------------------------------
 
 	/*
-	* Load xml feed
+	* Get xml data feed
 	*/
-	private function getXml(){
+	private function fetchXmlData(){
 
 		$this->xml = file_get_contents(
 						$this->url,
@@ -69,16 +70,13 @@ class NdbcFeed extends Model
 	}
 
 	/**
-    * Get JSON data from XML feed
-    *
-    * @param string 
-    * @return string - json 
+    * Reformat XML data as JSON
     */
     private function xmlToJson(){
 
 		$this->getFeedItem();
 
-		$this->addNamespacedRootTag();
+		$this->addNamespacedrootElement();
 
 		$this->stripCdataTags();
 
@@ -88,28 +86,39 @@ class NdbcFeed extends Model
 
     }
 
-    private function buildNamespacedRootTag($simpleXml){
-
-    	$namespaces = $simpleXml->getNameSpaces(true);    	
-
-    	$this->rootTag = '<root';
-    	foreach ($namespaces as $name => $url) {
-    		$this->rootTag .= ' xmlns:'. $name .'="'. $url .'"';
-    	}
-    	$this->rootTag .= '>';
-    }
-
+	/**
+	* Strip all unnecessary XML data to leave just feed item
+	*/
     private function getFeedItem(){
 
-    	$simpleXml = simplexml_load_string($this->xml);
+    	$xmlObj = simplexml_load_string($this->xml);
 
-    	$this->buildNamespacedRootTag($simpleXml);
+    	$this->buildNamespacedRootElement($xmlObj);
 
-    	$this->xml = $simpleXml->channel->item->asXML();
+    	$this->xml = $xmlObj->channel->item->asXML();
     }
 
-    private function addNamespacedRootTag(){
-    	$this->xml = $this->rootTag . $this->xml . '</root>';
+    /**
+     * Recreate an empty copy of the xml root element with namespace attributes
+     * 
+     * @param  SimpleXML $xmlObj
+     */
+    private function buildNamespacedRootElement($xmlObj){
+
+    	$namespaces = $xmlObj->getNameSpaces(true);    	
+
+    	$this->rootElement = '<root';
+    	foreach ($namespaces as $name => $url) {
+    		$this->rootElement .= ' xmlns:'. $name .'="'. $url .'"';
+    	}
+    	$this->rootElement .= '>';
+    }   
+
+    /**
+     * Add the root element (with namespace attributes) to the required xml data
+     */
+    private function addNamespacedrootElement(){
+    	$this->xml = $this->rootElement . $this->xml . '</root>';
     }
 
 	/**
@@ -134,18 +143,13 @@ class NdbcFeed extends Model
         				function($m){
         					$m1 = str_replace(' ', '-', $m[1]);
         					$m2 = trim($m[2]);
-        					return '<'. $m1 .'>'. $m[2] .'</'. $m1 .'>';
+        					return '<'. $m1 .'>'. $m2 .'</'. $m1 .'>';
         				},
         				$this->xml
         			);
 
         $this->xml = str_replace('<br />', '', $this->xml);
-        
-        //
-        //http://gskinner.com/RegExr/
-        //<strong>ELE MENT:</strong>VAL UE<br />
-        //<strong>(.+):</strong>(.+)<br />
-        //<$1>$2<$1>
+
     }
 
 }
