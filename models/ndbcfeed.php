@@ -6,7 +6,10 @@ class NdbcFeed extends Model
 	// Class constants
 	//------------------------------------------
 	const BASE_URL = 'http://www.ndbc.noaa.gov/data/latest_obs/',
-		  FILE_EXT= '.rss';
+		  FILE_EXT = '.rss',
+		  DESCRIPTION_TAG = 'description',
+		  TITLE_TAG = 'strong',
+		  SEPERATOR_TAG = 'br';
     
     //------------------------------------------
 	// Private properties
@@ -135,11 +138,11 @@ class NdbcFeed extends Model
     */
     private function formatDescriptionAsXml(){
 
-    	$this->xml = str_replace(array('<description>', '</description>'), array('<readings>', '</readings>'), $this->xml);
+    	$this->xml = str_replace(array('<'. self::DESCRIPTION_TAG .'>', '</'. self::DESCRIPTION_TAG .'>'), array('<readings>', '</readings>'), $this->xml);
 
     	// <strong>key</strong>val<br /> => <key>val</key>
         $this->xml = preg_replace_callback(
-        				'/<strong>(.+):<\/strong>(.+)<br \/>/',
+        				'/<'. self::TITLE_TAG .'>(.+):<\/'. self::TITLE_TAG .'>(.+)<'. self::SEPERATOR_TAG .' \/>/',
         				function($m){
         					$m1 = str_replace(' ', '-', $m[1]);
         					$m2 = trim($m[2]);
@@ -148,7 +151,7 @@ class NdbcFeed extends Model
         				$this->xml
         			);
 
-        $this->xml = str_replace('<br />', '', $this->xml);
+        $this->xml = str_replace('<'. self::SEPERATOR_TAG .' />', '', $this->xml);
 
     }
 
