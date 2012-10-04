@@ -54,7 +54,7 @@ class NdbcFeed extends Model
 	private function fetchXmlData(){
 
 		// @TODO: use cached feed data for development
-		$this->xml = file_get_contents(
+		/*$this->xml = file_get_contents(
 						$this->url,
 						false,
 					    stream_context_create(
@@ -69,46 +69,48 @@ class NdbcFeed extends Model
 	
 		if (!$this->xml || $http_response_header[0] == 'HTTP/1.1 404 Not Found') {
 			throw new Exception();
-		}
+		}*/
 
-		/*$this->xml = '<rss version="2.0" xmlns:georss="http://www.georss.org/georss" xmlns:dc="http://purl.org/dc/elements/1.1/">
-						  <channel>
-						    <title>NDBC - Station 62303 - Pembroke Buoy Observations</title>
-						    <description><!--[CDATA[This feed shows recent marine weather observations from Station 62303.]]--></description>
-						    <link>http://www.ndbc.noaa.gov/
-						    <pubdate>Wed, 03 Oct 2012 18:38:05 UT</pubdate>
-						    <lastbuilddate>Wed, 03 Oct 2012 18:38:05 UT</lastbuilddate>
-						    <ttl>30</ttl>
-						    <language>en-us</language>
-						    <managingeditor>webmaster.ndbc@noaa.gov</managingeditor>
-						    <webmaster>webmaster.ndbc@noaa.gov</webmaster>
-						    <img>
-						      <url>http://weather.gov/images/xml_logo.gif</url>
-						      <title>NOAA - National Weather Service</title>
-						      <link>http://www.ndbc.noaa.gov/
-						    
-						    <item>
-						      <pubdate>Wed, 03 Oct 2012 18:38:05 UT</pubdate>
-						      <title>Station 62303 - Pembroke Buoy</title>
-						      <description><!--[CDATA[
-						        <strong-->October 3, 2012 1800 UTC<br>
-						        <strong>Location:</strong> 51.603N 5.1W<br>
-						        <strong>Wind Direction:</strong> W (260°)<br>
-						        <strong>Wind Speed:</strong> 19.0 knots<br>
-						        <strong>Significant Wave Height:</strong> 7.2 ft<br>
-						        <strong>Average Period:</strong> 6 sec<br>
-						        <strong>Atmospheric Pressure:</strong> 29.65 in (1004.2 mb)<br>
-						        <strong>Pressure Tendency:</strong> -0.01 in (-0.4 mb)<br>
-						        <strong>Air Temperature:</strong> 56.5°F (13.6°C)<br>
-						        <strong>Dew Point:</strong> 46.4°F (8.0°C)<br>
-						        <strong>Water Temperature:</strong> 58.6°F (14.8°C)<br>
-						      ]]&gt;</description>
-						      <link>http://www.ndbc.noaa.gov/station_page.php?station=62303
-						      <guid>http://www.ndbc.noaa.gov/station_page.php?station=62303&amp;ts=1349287200</guid>
-						      <georss:point>51.603 -5.100</georss:point>
-						    </item>
-						  </channel>
-						</rss>';*/
+		$this->xml = '<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="/rss/ndbcrss.xsl"?>
+<rss version="2.0" xmlns:georss="http://www.georss.org/georss" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>NDBC - Station 62303 - Pembroke Buoy Observations</title>
+    <description><![CDATA[This feed shows recent marine weather observations from Station 62303.]]></description>
+    <link>http://www.ndbc.noaa.gov/</link>
+    <pubDate>Thu, 04 Oct 2012 17:47:00 UT</pubDate>
+    <lastBuildDate>Thu, 04 Oct 2012 17:47:00 UT</lastBuildDate>
+    <ttl>30</ttl>
+    <language>en-us</language>
+    <managingEditor>webmaster.ndbc@noaa.gov</managingEditor>
+    <webMaster>webmaster.ndbc@noaa.gov</webMaster>
+    <image>
+      <url>http://weather.gov/images/xml_logo.gif</url>
+      <title>NOAA - National Weather Service</title>
+      <link>http://www.ndbc.noaa.gov/</link>
+    </image>
+    <item>
+      <pubDate>Thu, 04 Oct 2012 17:47:00 UT</pubDate>
+      <title>Station 62303 - Pembroke Buoy</title>
+      <description><![CDATA[
+        <strong>October 4, 2012 1700 UTC</strong><br />
+        <strong>Location:</strong> 51.603N 5.1W<br />
+        <strong>Wind Direction:</strong> SW (220&#176;)<br />
+        <strong>Wind Speed:</strong> 18.1 knots<br />
+        <strong>Significant Wave Height:</strong> 5.6 ft<br />
+        <strong>Average Period:</strong> 5 sec<br />
+        <strong>Atmospheric Pressure:</strong> 29.75 in (1007.6 mb)<br />
+        <strong>Pressure Tendency:</strong> -0.04 in (-1.5 mb)<br />
+        <strong>Air Temperature:</strong> 57.0&#176;F (13.9&#176;C)<br />
+        <strong>Dew Point:</strong> 45.3&#176;F (7.4&#176;C)<br />
+        <strong>Water Temperature:</strong> 58.5&#176;F (14.7&#176;C)<br />
+      ]]></description>
+      <link>http://www.ndbc.noaa.gov/station_page.php?station=62303</link>
+      <guid>http://www.ndbc.noaa.gov/station_page.php?station=62303&amp;ts=1349370000</guid>
+      <georss:point>51.603 -5.100</georss:point>
+    </item>
+  </channel>
+</rss>';
 
 	}
 
