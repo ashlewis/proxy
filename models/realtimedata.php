@@ -80,13 +80,15 @@ class RealtimeData extends Model
         // remove multiple space chars
         $this->text = preg_replace('/[ ]{2,}/', ' ', $this->text);
 
+        $this->text = strtolower($this->text);
+
         $this->csv = str_getcsv($this->text, "\n");
     }
 
     /**
      * Convert CSV data to json
      */
-    function csvToJson(){
+    private function csvToJson(){
 
         $header = null;
         $units = null;
@@ -107,10 +109,97 @@ class RealtimeData extends Model
 
                     $prepareData[$header[$n]] = array('data'=>$items[$n], 'units'=>$units[$n]);
 
+                    if ($header[$n] == 'wvht') {
+                        $prepareData['wvhti'] = array('data'=>round($items[$n]*3.281, 1), 'units'=>'ft');
+                    }
+
+                    if ($header[$n] == 'wspd') {
+                        $prepareData['wspdi'] = array('data'=>round($items[$n]*1.943, 1), 'units'=>'kts');
+                    }
+
+                    if ($header[$n] == 'wdir') {
+                        $prepareData['wdircard'] = array('data'=>$this->calcWindDirection($items[$n]), 'units'=>'');
+                    }
+
                 }
                 $data[] = $prepareData;
             }
         }
         $this->json = json_encode($data);
+    }
+
+    private function calcWindDirection($angle){
+
+        switch (round($angle/22.5)) {
+
+            case 0:
+                return 'N';
+                break;
+
+            case 1:
+                return 'NNE';
+                break;
+
+            case 2:
+                return 'NE';
+                break;
+
+            case 3:
+                return 'ENE';
+                break;
+
+            case 4:
+                return 'E';
+                break;
+
+            case 5:
+                return 'ESE';
+                break;
+
+            case 6:
+                return 'SE';
+                break;
+
+            case 7:
+                return 'SSE';
+                break;
+
+            case 8:
+                return 'S';
+                break;
+
+            case 9:
+                return 'SSW';
+                break;
+
+            case 10:
+                return 'SW';
+                break;
+
+            case 11:
+                return 'WSW';
+                break;
+
+            case 12:
+                return 'W';
+                break;
+
+            case 13:
+                return 'WNW';
+                break;
+
+            case 14:
+                return 'NW';
+                break;
+
+            case 15:
+                return 'NNW';
+                break;
+
+            case 16:
+                return 'N';
+                break;
+
+        }
     }
 }
